@@ -9,7 +9,6 @@ import com.codename1.ui.geom.Point2D;
 import org.csc133.a3.gameobjects.*;
 import org.csc133.a3.views.GlassCockpit;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Random;
 

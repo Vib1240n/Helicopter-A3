@@ -109,7 +109,7 @@ public class Mapview extends Container {
 		try{
 			getVTM().getInverse(inverse);
 		}catch(Transform.NotInvertibleException e){
-			e.printStackTrace();
+			
 		}
 		return inverse;
 	}
@@ -126,7 +126,7 @@ public class Mapview extends Container {
 	}
 
 	@Override
-	public void pressed(int x, int y){
+	public void pointerPressed(int x, int y){
 		x = x - getAbsoluteX();
 		y = y - getAbsoluteY();
 
@@ -149,9 +149,19 @@ public class Mapview extends Container {
 	@Override
 	public void paint(Graphics g) {
 		super.paint(g);
+		Point pOrigin = new Point(this.getX(),this.getY());
+		Point sOrigin = new Point(getAbsoluteX(), getAbsoluteY());
+
 		for (GameObjects go : gw.getGameObjectCollection()) {
-			go.draw(g, new Point(this.getX(), this.getY()));
+			setup(g);
+			go.draw(g, pOrigin, sOrigin);
+			g.resetAffine();
 		}
 	}
 
+	public void updateTransform(){
+		for(GameObjects  go: gw.getGameObjectCollection()){
+			go.updateTransform();
+		}
+	}
 }

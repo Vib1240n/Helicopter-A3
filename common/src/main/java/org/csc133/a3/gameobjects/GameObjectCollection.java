@@ -49,11 +49,6 @@ public abstract class GameObjectCollection<T> extends GameObjects implements Ite
     }
 
     @Override
-    public void draw(Graphics g, Point containerOrigin) {
-
-    }
-
-    @Override
     public Iterator<T> iterator() {
         return new GameObjectIterator();
     }
