@@ -1,60 +1,118 @@
 package org.csc133.a3.gameobjects;
 
+import com.codename1.charts.util.ColorUtil;
+import com.codename1.ui.Font;
+import com.codename1.ui.Graphics;
+import com.codename1.ui.geom.Dimension;
+import com.codename1.ui.geom.Point2D;
 
 import java.util.Random;
-import com.codename1.charts.util.ColorUtil;
-import com.codename1.ui.Graphics;
-import com.codename1.ui.geom.Point;
 
-public class building extends Fixed {
-    private int building_height;
-    private int building_width;
-	private int building_value;
-    private int TotalNumFires;
-    private Point location;
-    Fire fire;
+import static com.codename1.ui.CN.*;
 
-    public building(Point location, int height, int width, int value){
-        this.building_height = height;
-        this.building_width = width;
-		this.building_value = value;
-        this.location = location;
-        this.TotalNumFires = 0;
-    }
+public class building extends GameObjects {
+    private int value;
+    private int damage;
+    private int currentValue;
+    private int buildingID;
 
-    public int height(){
-        return this.building_height;
-    }
-    public int width(){
-        return this.building_width;
-    }
-    public void setFireInBuilding(Fire f){ 
-        this.fire = f;
-        if(building_width != 0 && building_height != 0){
-            Point new_location = new Point( new Random().nextInt(building_width) +location.getX(), new Random().nextInt(building_height) + location.getY());
-            f.Startfire(new_location);
-            this.TotalNumFires +=1;
+    public building(int buildingObject, Dimension worldSize) {
+        setColor(ColorUtil.rgb(255, 0, 0));
+        if (buildingObject == 0) {
+            this.dimension = new Dimension(1200, 200);
+            this.worldSize = worldSize;
+            value = 33333;
+            currentValue = value;
+            this.buildingID = buildingObject;
+            translate(0, this.getDimension().getHeight() * 2.2);
+
+        } else if (buildingObject == 1) {
+            this.dimension = new Dimension(200, 500);
+            value = 33333;
+            currentValue = value;
+            this.buildingID = buildingObject;
+            translate(-getDimension().getWidth() * 3,
+                    -getDimension().getHeight() / 2);
+
+        } else {
+            this.dimension = new Dimension(200, 400);
+            value = 33333;
+            currentValue = value;
+            this.buildingID = buildingObject;
+            translate(getDimension().getWidth() * 3,
+                    -getDimension().getHeight() / 2);
         }
+        translate(worldSize.getWidth() / 2, worldSize.getHeight() / 2);
     }
 
-    public void setNewValue(){
+    public int getCurrentValue() {
+        return this.currentValue;
+    }
+
+    public int getCurrentValue(int loss) {
+        return currentValue = currentValue - loss;
+    }
+
+    public void adjustValue(int loss) {
+        this.value = loss;
+    }
+
+    public int getBuildingArea() {
+        return (dimension.getWidth() * dimension.getHeight());
+    }
+
+    public void setFireInBuilding(Fire fire) {
+        float xMin = myTranslation.getTranslateX()
+                - this.getWidth() / 2 + fire.getMaxSize() / 2;
+        float yMin = (float) (myTranslation.getTranslateY()
+                - fire.getMaxSize() * 1.5 + this.getHeight() / 2
+                - fire.getMaxSize() / 2);
+
+        int boundX = this.getWidth() - fire.getMaxSize();
+        int boundY = -this.getHeight() + fire.getMaxSize();
+
+        float randX = 0;
+        float randY = 0;
+
+        if (boundX > 0) {
+            randX = new Random().nextInt(boundX);
+        } else {
+            randX = new Random().nextInt(-boundX);
+            randX *= -1;
+        }
+
+        if (boundY > 0) {
+            randY = new Random().nextInt(boundY);
+        } else {
+            randY = new Random().nextInt(-boundY);
+            randY *= -1;
+        }
+
+        fire.translate(randX + xMin, randY + yMin);
+    }
+
+    public void setDMG(int damage) {
+        this.damage = damage;
+    }
+
+    @Override
+    public void updateLocalTransforms() {
 
     }
 
     @Override
-    public void draw(Graphics g, Point containerOrigin){
-		g.setColor(ColorUtil.rgb(255,0,0));
-		g.drawString("V: " + this.building_value,
-				location.getX() + building_width,
-				location.getY() + (int)(building_height / 1.2));
+    protected void localDraw(Graphics g, Point2D parentOrigin,
+            Point2D screenOrigin) {
+        g.setColor(getColor());
+        containerTranslate(g, parentOrigin);
+        cn1ForwardPrimitiveTranslate(g, getDimension());
+        g.drawRect(-getWidth() / 2, -getHeight() / 2, getWidth(), getHeight());
 
-        g.setColor(ColorUtil.rgb(255, 0, 0));
-        g.drawRect(location.getX() + containerOrigin.getX(), location.getY() 
-                + containerOrigin.getY(), building_width, building_height);
+        g.setFont(Font.createSystemFont(FACE_MONOSPACE, STYLE_BOLD, SIZE_MEDIUM));
+        g.scale(1, -1);
+        g.drawString("V  : $" + this.getCurrentValue(),
+                getWidth() / 2 + 25, getHeight() / 8 - getHeight());
+        g.drawString("D  : " + this.damage + "%",
+                getWidth() / 2 + 25, getHeight() / 8 + 25 - getHeight());
     }
-
-    public int getValue() {
-        return this.building_value;
-    }
-
 }

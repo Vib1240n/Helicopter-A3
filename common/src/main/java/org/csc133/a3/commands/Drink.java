@@ -5,7 +5,7 @@ import com.codename1.ui.events.ActionEvent;
 import com.codename1.ui.events.ActionListener;
 import org.csc133.a3.GameWorld;
 
-public class Drink extends Command implements ActionListener {
+public class Drink extends Command{
 	private final GameWorld gw;
 
 	public Drink(GameWorld gw){
@@ -14,6 +14,6 @@ public class Drink extends Command implements ActionListener {
 	}
 
 	public void actionPerformed(ActionEvent e){
-		gw.Drink();
+		gw.drink();
 	}
 }

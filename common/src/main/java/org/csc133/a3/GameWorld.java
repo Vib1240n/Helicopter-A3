@@ -1,275 +1,373 @@
-package org.csc133.a3 ;
+package org.csc133.a3;
 
+import com.codename1.ui.Dialog;
 import com.codename1.ui.Display;
-import com.codename1.ui.Form;
 import com.codename1.ui.geom.Dimension;
-import com.codename1.ui.geom.Point;
 import com.codename1.ui.geom.Point2D;
-
 import org.csc133.a3.gameobjects.*;
-import org.csc133.a3.views.GlassCockpit;
 
 import java.util.ArrayList;
 import java.util.Random;
 
-public class GameWorld extends Form {
-	private final Random random = new Random();
+public class GameWorld {
+	Dimension worldSize;
+	private int totalFireDMG;
+	private int maxFireDMG;
+	private int buildingArea = 0;
+	private int damagePercent = 0;
+	private int ticks;
+	private int fireTotal = 0;
+	private boolean zoomed = false;
+	private final int NUMBER_OF_BUILDINGS = 3;
+	private static PlayerHelicopter playerHelicopter;
+	private Helipad helipad;
+	private River river;
+	// private FlightPath.BezierCurve bezierCurve;
+	// private FlightPath.BezierCurve bezierCurveRightSide;
+	// private FlightPath.BezierCurve bezierCurveLeftSide;
+	private NonPlayerHelicopter nonPlayerHelicopter;
+	private buildings buildings;
+	private Fires fires;
+	// private FlightPath.FlightControl fc;
+	Point2D tempFireLocation;
+	int path = 0;
+
+	private ArrayList<GameObjects> gameObjects;
 	private int rand;
 
-	private ArrayList<GameObjects> objs;
-	// making it private
-	private Helicopter heli;
-	private GlassCockpit gc;
-	/**
-	 * Building variables
-	 */
-	private buildings buildings;
-	private Point building_leftPoint;
-	private Point building_rightPoint;
-	private Point building_topPoint;
-	private building b_top;
-	private building b_left;
-	private building b_right;
-	private Fires fires;
-	private Fire fire;
-	private ArrayList<Fire> deadFires;
-	private int maxBudget;
-	private boolean zoom = false;
+	private double fireTotalSize;
 
-	/**
-	 * Other variables
-	 */
-	private Helipad pad;
-	private River river;
-	private Fire fire_center;
-	private Dimension size;
+	public GameWorld() {
+	}
 
 	public void init() {
-		/*
-		 * Initiliazing variables
-		 */
-		gc = new GlassCockpit(this);
-		deadFires = new ArrayList<>();
-		System.err.println(size);
-		pad = new Helipad(size);
-		river = new River(size);
-		rand = random.nextInt(200);
-		heli = new Helicopter(size);
-		maxBudget = 1000;
-		fires = new Fires();
-		objs = new ArrayList<>();
+		ticks = 0;
+		helipad = new Helipad(worldSize);
+		river = new River(worldSize);
 		buildings = new buildings();
+		fires = new Fires();
+		rand = new Random().nextInt(10) + 50;
 
-		top_building();
-		right_building();
-		left_building();
+		// bezierCurve = new FlightPath.BezierCurve(worldSize, 0);
 
-		objs.add(pad);
-		objs.add(river);
-		objs.add(buildings);
+		// bezierCurveRightSide = new FlightPath.BezierCurve(
+		// 		worldSize, 1);
+		// bezierCurveLeftSide = new FlightPath.BezierCurve(
+		// 		worldSize, 2);
 
-		for (GameObjects Gameobj : objs) {
-			if (Gameobj instanceof buildings) {
-				for (building building : buildings) {
-					rand = new Random().nextInt(2) + 2;
-					for (int i = 0; i <= rand; i++) {
-						fire = new Fire(size, 20);
-						fires.add(fire);
-						building.setFireInBuilding(fire);
+		// nonPlayerHelicopter = new NonPlayerHelicopter(worldSize, bezierCurve);
+
+		for (int x = 0; x < NUMBER_OF_BUILDINGS; x++) {
+			buildings.add(new building(x, worldSize));
+		}
+
+		for (int i = 0; i < 2; i++) {
+			int buildingID = 0;
+			for (building building : buildings) {
+				Fire temp = new Fire(worldSize, buildingID);
+				building.setFireInBuilding(temp);
+				if (buildingID == 2) {
+					temp.getLocation();
+					// System.err.println("create: "+ temp.getLocation());
+				}
+				temp.getLocation();
+				getTotalFireSize();
+				fires.add(temp);
+				fireTotal++;
+				buildingID++;
+				// System.err.println("ID: " + buildingID);
+			}
+			// System.err.println("ID: " + buildingID);
+		}
+
+		while (this.fireTotalSize < 950) {
+			int buildingID = 0;
+			for (building building : buildings) {
+				if (ticks % rand == 0) {
+					Fire temp = new Fire(worldSize, buildingID);
+					building.setFireInBuilding(temp);
+					if (buildingID == 2) {
+						tempFireLocation = temp.getLocation();
+						// System.err.println("create: "+ temp.getLocation());
 					}
-
+					fires.add(temp);
+					fireTotal++;
+					buildingID++;
+					getTotalFireSize();
+					// System.err.println("ID1: " + buildingID);
+				}
+				if (this.fireTotalSize > 950) {
+					break;
 				}
 			}
 		}
-		objs.add(fires);
-		objs.add(heli);
-	}
+		for (building building : buildings) {
+			buildingArea += building.getBuildingArea();
+		}
 
-	public GameWorld() {
-		size = new Dimension();
-		init();
-	}
+		playerHelicopter = new PlayerHelicopter(worldSize);
+		// nonPlayerHelicopter = new NonPlayerHelicopter(worldSize, bezierCurve);
 
-	public ArrayList<GameObjects> getGameObjectCollection() {
-		return objs;
-	}
+		// fc = new FlightPath.FlightControl(nonPlayerHelicopter);
 
-	public void top_building() {
-		/**
-		 * Building Dimensions
-		 */
-		int building_height = 150;
-		int building_width = (int) (size.getWidth() * 0.75);
-		int building_value = 900;
-		// Building Locations
-		building_topPoint = new Point(size.getHeight() / 4,
-				(int) (size.getWidth() / 18));
+		// nonPlayerHelicopter.setPath(bezierCurve);
 
-		// initializing building
-		b_top = new building(building_topPoint,
-				building_height, building_width, building_value);
+		gameObjects = new ArrayList<>();
 
-		buildings.add(b_top);
-
-	}
-
-	public void right_building() {
-		/**
-		 * Building Dimensions
-		 */
-		int building_height = size.getHeight() / 2;
-		int building_width = size.getWidth() / 8;
-		int building_value = 300;
-		// Building Locations
-		building_rightPoint = new Point(size.getHeight() + size.getHeight() / 6,
-				size.getWidth() / 4);
-
-		// initializing building
-		b_right = new building(building_rightPoint,
-				building_height, building_width, building_value);
-
-		buildings.add(b_right);
-	}
-
-	public void left_building() {
-		/**
-		 * Building Dimensions
-		 */
-		int building_height = size.getHeight() / 3;
-		int building_width = size.getWidth() / 9;
-		int building_value = 300;
-		// Building Locations
-		building_leftPoint = new Point((int) (size.getHeight() * 0.1),
-				(int) (size.getWidth() / 3.4));
-
-		// initializing building
-		b_left = new building(building_leftPoint,
-				building_height, building_width, building_value);
-
-		buildings.add(b_left);
+		gameObjects.add(helipad);
+		gameObjects.add(river);
+		gameObjects.add(buildings);
+		// gameObjects.add(fires);
+		// gameObjects.add(bezierCurve);
+		// gameObjects.add(bezierCurveRightSide);
+		// gameObjects.add(bezierCurveLeftSide);
+		gameObjects.add(nonPlayerHelicopter);
+		gameObjects.add(playerHelicopter);
+		// System.err.println("helicopter added to gameObjects");
 	}
 
 	public void quit() {
 		Display.getInstance().exitApplication();
 	}
 
-	public void steerLeft() {
-		heli.steerLeft();
-	}
-
-	public void steerRight() {
-		heli.steerRight();
-	}
-
-	public void Accelerate() {
-		heli.moveForward();
-	}
-
-	public void Brake() {
-		heli.brake();
-	}
-
-	public void Fight() {
+	void tick() {
+		ticks++;
+		getTotalFireSize();
+		getTotalDMG();
 		for (Fire fire : fires) {
-			fire.extinguishFire();
+			fire.start();
+			if (ticks % rand == 0 && fire.begin() == true) {
+				fire.grow();
+				getTotalDMG();
+				for (building building : buildings) {
+					building.adjustValue(this.damagePercent * 1000 / 3);
+					building.setDMG(this.damagePercent / 3);
+					building.getCurrentValue(this.damagePercent / 3);
+				}
+			}
+			if (fire.getSize() <= 8) {
+				fireTotal--;
+				fires.remove(fire);
+			}
 		}
-	}
 
-	public void Drink() {
-		heli.fillTank();
-	}
-
-	public void setDimension(Dimension size) {
-		this.size = size;
-	}
-
-	public String getSpeed() {
-		return Integer.toString(heli.get_speed());
-	}
-
-	public String getHeading() {
-		return Integer.toString(heli.getHeading());
-	}
-
-	public String getFuel() {
-		return Integer.toString(heli.getFuel());
-	}
-
-	public String getNumberOfFires() {
-		return Integer.toString(fire.size());
-	}
-
-	public String getDamage() {
-		int totalValue = 0;
-		int area = 0;
-		int totalAreaBuilding = 0;
-		int totalAreaFire = 0;
-		int damage = 0;
 		for (building building : buildings) {
-			area = building.height() * building.width();
-			totalAreaBuilding += area;
+			building.adjustValue(this.damagePercent * 1000 / 3);
+			building.setDMG(this.damagePercent / 3);
 		}
+
+		/*
+		 * if (helicopter.isEngineOn()) {
+		 * helicopter.move();
+		 * helicopter.useFuel();
+		 * }
+		 */
+
+		if (river.isCollidingWith(nonPlayerHelicopter)) {
+			nonPlayerHelicopter.grabWaterFromRiver();
+		}
+
 		for (Fire fire : fires) {
-			totalAreaFire += fire.getArea();
-		}
-		damage = totalAreaBuilding / totalAreaFire;
-		return Integer.toString(damage);
-	}
-
-	public String getFireSize() {
-		int totalSize = 0;
-		for (Fire fire : fires) {
-			totalSize += fire.size();
-		}
-		return Integer.toString(totalSize);
-
-	}
-
-	public void Zoom(){
-		if(zoom == false){
-			zoom = true;
-		}else{
-			zoom = false;
-		}
-	}
-
-	public boolean isZoomed(){
-		return zoom;
-	}
-
-	public String TotalFires() {
-		return Integer.toString(fires.size());
-	}
-
-	public void updateTick(int timer) {
-		gc.update();
-		heli.updateForward();
-		heli.isCollison();
-		getHeading();
-		getDamage();
-		if (heli.isCollisionFire(fires)) {
-			Fight();
-		}
-		if (timer % 20 == 0) {
-			for (GameObjects GameObjects : objs) {
-				if (GameObjects instanceof Fires) {
-					for (Fire fire : fires) {
-						fire.grow_fire();
-					}
+			if (fire.isCollidingWith(nonPlayerHelicopter)
+					&& nonPlayerHelicopter.getCurrentWaterInTank() > 1) {
+				fire.gigaShrink();
+				if (nonPlayerHelicopter.getCurrentWaterInTank() >= 500) {
+					nonPlayerHelicopter.setWater(
+							nonPlayerHelicopter.getCurrentWaterInTank() - 500);
 				}
 			}
 		}
+
+		// if (nonPlayerHelicopter.getLocation().getX() == bezierCurve.getEndControlPoint().getX()
+		// 		&& nonPlayerHelicopter.getLocation().getY() == bezierCurve.getEndControlPoint().getY()
+		// 		&& bezierCurve.getCurveID() == 0 && path == 0) {
+		// 	bezierCurve.oldPath();
+		// 	bezierCurveRightSide.newActivePath();
+
+		// 	nonPlayerHelicopter.setPath(bezierCurveRightSide);
+		// 	path = 1;
+		// } else if (nonPlayerHelicopter.getLocation().getX() == bezierCurveRightSide.getEndControlPoint().getX()
+		// 		&& nonPlayerHelicopter.getLocation().getY() == bezierCurveRightSide.getEndControlPoint().getY()
+		// 		&& bezierCurveRightSide.getCurveID() == 1 && path == 1) {
+
+		// 	bezierCurveRightSide.oldPath();
+		// 	bezierCurveLeftSide.newActivePath();
+		// 	nonPlayerHelicopter.setPath(bezierCurveLeftSide);
+
+		// 	path = 2;
+		// } else if (nonPlayerHelicopter.getLocation().getX() == bezierCurveLeftSide.getEndControlPoint().getX()
+		// 		&& nonPlayerHelicopter.getLocation().getY() == bezierCurveLeftSide.getEndControlPoint().getY()
+		// 		&& bezierCurveLeftSide.getCurveID() == 2 && path == 2) {
+
+		// 	bezierCurveLeftSide.oldPath();
+		// 	/*
+		// 	 * for(Fire fire : fires){
+		// 	 * if(fire.getBuildingID() == 2){
+		// 	 * flyToFire(fire.getLocation());
+		// 	 * //System.err.println("set: "+ fire.getLocation());
+		// 	 * }
+		// 	 * }
+		// 	 */
+		// 	bezierCurveRightSide.newActivePath();
+		// 	nonPlayerHelicopter.setPath(bezierCurveRightSide);
+		// 	path = 1;
+		// }
+
+		if (playerHelicopter.isEngineOn()) {
+			playerHelicopter.move();
+			playerHelicopter.useFuel();
+		}
+		if (nonPlayerHelicopter.isEngineOn()) {
+			nonPlayerHelicopter.setSpeed();
+			nonPlayerHelicopter.move();
+			nonPlayerHelicopter.useFuel();
+		}
+
+		victoryScreen();
+	}
+
+	public ArrayList<GameObjects> getGameObjectCollection() {
+		return gameObjects;
+	}
+
+	public void drink() {
+		if (river.isCollidingWith(playerHelicopter)) {
+			playerHelicopter.grabWaterFromRiver();
+		}
+	}
+
+	public void fight() {
 		for (Fire fire : fires) {
-			if (fire.size() <= 0) {
-				deadFires.add(fire);
+			if (fire.isCollidingWith(playerHelicopter)
+					&& playerHelicopter.getCurrentWaterInTank() > 1) {
+				fire.shrink(playerHelicopter.getCurrentWaterInTank());
 			}
 		}
-		fires.getGameObjects().removeAll(deadFires);
+		playerHelicopter.useWater();
 	}
 
-	public void Fire(Point2D p) {
+	// Once states are working check if helicopter is
+	// stopped instead of speed = 0
+	void victoryScreen() {
+		if (helipad.isCollidingWith(playerHelicopter) && fireTotal == 0
+				&& playerHelicopter.getSpeed() == 0) {
+			if (Dialog.show("Game Over", "You Won!\nScore: "
+					+ playerHelicopter.getFuel() + "\nPlay Again?",
+					"Heck Yea!", "Some Other Time")) {
+				// user clicked yes
+				new org.csc133.a3.Game();
+
+			} else {
+				// If user clicked no
+				quit();
+			}
+		}
 	}
 
-    public void setCurve(Point2D transform2d) {
-    }
+	void turn(int turnAmount) {
+		playerHelicopter.turn(turnAmount);
+	}
+
+	public void left() {
+		playerHelicopter.turn(-15);
+	}
+
+	public void right() {
+		playerHelicopter.turn(15);
+	}
+
+	public void adjustSpeed(int changeSpeed) {
+		if (playerHelicopter.isEngineOn()) {
+			playerHelicopter.adjustSpeed(changeSpeed);
+		}
+	}
+
+	public String getHeading() {
+		return String.valueOf(playerHelicopter.getHeading());
+	}
+
+	private void getTotalFireSize() {
+		this.fireTotalSize = 0;
+
+		for (Fire fire : fires) {
+			this.fireTotalSize += fire.currentSize();
+		}
+	}
+
+	private void getTotalDMG() {
+		this.totalFireDMG = 0;
+		for (Fire fire : fires) {
+			this.totalFireDMG += fire.getGreatestSize();
+		}
+
+		if (totalFireDMG > maxFireDMG) {
+			maxFireDMG = totalFireDMG;
+		}
+
+		this.damagePercent = (this.maxFireDMG * 42000 / this.buildingArea);
+	}
+
+	public String getSpeed() {
+		return String.valueOf(playerHelicopter.getSpeed());
+	}
+
+	public String getFuel() {
+		return String.valueOf(playerHelicopter.getFuel());
+	}
+
+	public String getFireCount() {
+		return String.valueOf(fires.size());
+	}
+
+	public String getDamage() {
+		return (damagePercent + "%");
+	}
+
+	public String getLoss() {
+		return ("$" + damagePercent * 1000);
+	}
+
+	public String getFireSize() {
+		return String.valueOf((int) this.fireTotalSize);
+	}
+
+	public void setDimension(Dimension worldSize) {
+		this.worldSize = worldSize;
+	}
+
+	// public void setBezierCurve(Point2D location) {
+	// 	bezierCurveRightSide.setEndControlPoint(location);
+	// 	bezierCurveLeftSide.setStartControlPoint(location);
+	// }
+
+	public void quitGame() {
+		quit();
+	}
+
+	public void selectFire(Point2D p) {
+		for (Fire fire : fires) {
+			if (fire.contains(p) && !fire.isSelected()) {
+				fire.select(true);
+				// flyToFire(p);
+				// setBezierCurve(fire.getLocation());
+			}
+		}
+	}
+
+	public void startEngine() {
+		playerHelicopter.startOrStopEngine();
+		nonPlayerHelicopter.startOrStopEngine();
+	}
+
+	public void zoom() {
+		if (zoomed == false) {
+			zoomed = true;
+		} else {
+			zoomed = false;
+		}
+	}
+
+	public boolean zoomed() {
+		return zoomed;
+	}
 }

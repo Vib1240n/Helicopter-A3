@@ -3,44 +3,36 @@ package org.csc133.a3.gameobjects;
 import com.codename1.charts.util.ColorUtil;
 import com.codename1.ui.Graphics;
 import com.codename1.ui.geom.Dimension;
-import com.codename1.ui.geom.Point;
-import org.csc133.a3.Game;
+import com.codename1.ui.geom.Point2D;
 
-public class River extends Fixed{
-    Point Location;
-    private final int river_width;
-    private final int river_height;
-    private final Dimension size;
+public class River extends Fixed {
 
-    public River(Dimension size) {
-        //pass in size
-        this.size = size;
-		Location = new Point(size.getHeight() - size.getHeight(), size.getWidth()/7);
-		river_height = 150;
-		river_width = size.getWidth() - 10;
-	}
-
-    /**
-     * Getter methods for correct collision checking for helicopter
-     */
-    public Point getLocation() {
-        return Location;
+    public River(Dimension worldSize) {
+        this.worldSize = worldSize;
+        setColor(ColorUtil.BLUE);
+        setDimension(new Dimension(worldSize.getWidth(),
+                worldSize.getHeight() / 7));
+        translate(0, worldSize.getHeight() / 7);
+        translate(worldSize.getWidth() / 2, worldSize.getHeight() / 2);
     }
 
-    public int get_river_width() {
-        return river_width;
+    public boolean isCollidingWith(Helicopter helicopter) {
+        return super.isCollidingWith(helicopter);
     }
 
-    public int get_river_height() {
-        return river_height;
-    }
-    /*
-     * Draw method for river
-     */
-	@Override
-	public void draw(Graphics g, Point containerOrigin) {
+    @Override
+    public void updateLocalTransforms() {
 
-		g.setColor(ColorUtil.BLUE);
-        g.drawRect(Location.getX() + containerOrigin.getX(), Location.getY() + containerOrigin.getY(), river_width, river_height);
-	}
+    }
+
+    @Override
+    protected void localDraw(Graphics g,
+            Point2D parentOrigin, Point2D screenOrigin) {
+        g.setColor(getColor());
+        containerTranslate(g, parentOrigin);
+        cn1ForwardPrimitiveTranslate(g, getDimension());
+        g.drawRect(-dimension.getWidth() / 2,
+                -dimension.getHeight() / 2,
+                dimension.getWidth(), dimension.getHeight());
+    }
 }

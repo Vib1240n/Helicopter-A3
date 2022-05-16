@@ -3,10 +3,6 @@ package org.csc133.a3.gameobjects;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import com.codename1.ui.Graphics;
-import com.codename1.ui.geom.Point;
-
-
 public abstract class GameObjectCollection<T> extends GameObjects implements Iterable<T>{
 
     ArrayList<T> GameObjs;

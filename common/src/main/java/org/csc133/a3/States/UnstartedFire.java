@@ -1,4 +1,6 @@
-package org.csc133.a3.gameobjects;
+package org.csc133.a3.States;
+
+import org.csc133.a3.gameobjects.Fire;
 
 public class UnstartedFire extends State {
     private static UnstartedFire instance = new UnstartedFire();
@@ -12,6 +14,6 @@ public class UnstartedFire extends State {
     // Business logic and state transition
     @Override
     public void updateState(Fire fire) {
-        fire.setCurrentState(StartedFire.instance());
+        // fire.setCurrentState(StartedFire.instance());
     }
 }

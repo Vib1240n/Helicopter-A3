@@ -6,4 +6,8 @@ public abstract class Fixed extends GameObjects{
 		super();
 	}
 
+	public boolean isCollidingWith(Helicopter helicopter) {
+		return false;
+	}
+
 }

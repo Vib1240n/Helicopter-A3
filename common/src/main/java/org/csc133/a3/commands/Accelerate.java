@@ -5,7 +5,7 @@ import com.codename1.ui.events.ActionEvent;
 import com.codename1.ui.events.ActionListener;
 import org.csc133.a3.GameWorld;
 
-public class Accelerate extends Command implements ActionListener {
+public class Accelerate extends Command{
 	private final GameWorld gw;
 
 	public Accelerate(GameWorld gw){
@@ -14,6 +14,6 @@ public class Accelerate extends Command implements ActionListener {
 	}
 
 	public void actionPerformed(ActionEvent e){
-		gw.Accelerate();
+		gw.adjustSpeed(1);
 	}
 }

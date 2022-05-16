@@ -1,4 +1,7 @@
-package org.csc133.a3.gameobjects;
+package org.csc133.a3.States;
+
+import org.csc133.a3.gameobjects.ExtinguishFire;
+import org.csc133.a3.gameobjects.Fire;
 
 public class StartedFire extends State{
     private static StartedFire instance = new StartedFire();
@@ -11,6 +14,6 @@ public class StartedFire extends State{
 
     @Override
     public void updateState(Fire fire) {
-        fire.setCurrentState(ExtinguishFire.instance());
+        // fire.setCurrentState(ExtinguishFire.instance());
     }
 }
